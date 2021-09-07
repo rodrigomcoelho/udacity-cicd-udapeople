@@ -391,11 +391,11 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-          # Your code here
-          apk add --no-cache tar gzip
-          apk add --update ansible
-          apk add --update curl
-          apk add --update jq
+            # Your code here
+            apk add --no-cache tar gzip
+            apk add --update ansible
+            apk add --update curl
+            apk add --update jq
       # attach workspace
       - attach_workspace:
           at: ~/
