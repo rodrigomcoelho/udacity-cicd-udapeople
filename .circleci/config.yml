@@ -72,9 +72,6 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules,frontend/package-lock.json]
           key: 'frontend-build-{{arch}}-{{ checksum "frontend/package.json" }}'
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
 
   build-backend:
     docker:
@@ -104,9 +101,6 @@ jobs:
           root: ~/
           paths:
             - project/backend/dist/
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
 
   test-frontend:
     docker:
