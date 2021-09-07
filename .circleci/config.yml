@@ -337,7 +337,7 @@ jobs:
             yum install -y curl
             yum install -y gzip
       - restore_cache:
-        key: [frontend-build]
+          key: [frontend-build]
       - run:
           name: Moves cache to current working directory
           command: |
