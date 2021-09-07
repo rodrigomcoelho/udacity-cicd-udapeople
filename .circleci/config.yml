@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  slack: circleci/slack@4.1.4
+  slack: circleci/slack@4.4.2
 
 commands:
   destroy-environment:
@@ -52,7 +52,7 @@ commands:
 jobs:
   build-frontend:
     docker:
-      - image: cimg/node:16.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
@@ -72,10 +72,13 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules,frontend/package-lock.json]
           key: 'frontend-build-{{arch}}-{{ checksum "frontend/package.json" }}'
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
 
   build-backend:
     docker:
-      - image: cimg/node:16.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
@@ -101,11 +104,14 @@ jobs:
           root: ~/
           paths:
             - project/backend/dist/
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
 
   test-frontend:
     docker:
       # Docker image here
-      - image: cimg/node:16.8.0
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
@@ -122,16 +128,17 @@ jobs:
           key: 'frontend-build-{{arch}}-{{ checksum "frontend/package.json" }}'
       # Your job code here
       - run:
-          name: Front-End test
+          name: Front End test
           command: |
             cd ./frontend
+            npm i
             npm run test
           no_output_timeout: 15m
 
   test-backend:
     docker:
       # Docker image here
-      - image: cimg/node:16.8.0
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
@@ -151,12 +158,13 @@ jobs:
           name: Back End test
           command: |
             cd ./backend
+            npm i
             npm run test
 
   scan-frontend:
     docker:
       # Docker image here
-      - image: cimg/node:16.8.0
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
@@ -176,12 +184,12 @@ jobs:
           name: Front-End Analyze
           command: |
             cd ./frontend
-            npm audit --audit-level=critical
+            npm audit fix --audit-level=critical --force
 
   scan-backend:
     docker:
       # Docker image here
-      - image: cimg/node:16.8.0
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
@@ -201,7 +209,7 @@ jobs:
           name: Back.End Analyze
           command: |
             cd ./backend
-            npm audit --audit-level=critical
+            npm audit fix --audit-level=critical --force
 
   deploy-infrastructure:
     docker:
@@ -290,7 +298,7 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: cimg/node:16.8.0
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
