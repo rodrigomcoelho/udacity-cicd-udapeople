@@ -19,6 +19,10 @@ commands:
             aws s3 rm "s3://udapeople-<<parameters.workflow-id>>/" --recursive
             aws cloudformation delete-stack \
               --stack-name "udapeople-front-end-<<parameters.workflow-id>>"
+      - run:
+          name: Destroy backend environmet
+          when: on_fail
+          command: |
             aws cloudformation delete-stack \
               --stack-name "udapeople-back-end-<<parameters.workflow-id>>"
 
@@ -58,7 +62,7 @@ jobs:
             sudo apt-get -y install awscli
             sudo apt-get -y install curl
       - restore_cache:
-          keys: [frontend-build]
+          key: 'frontend-build-{{arch}}'
       - run:
           name: Build front-end
           command: |
@@ -66,8 +70,8 @@ jobs:
             cd ./frontend
             npm install --package-lock
       - save_cache:
-          paths: [frontend/node_modules]
-          key: frontend-build
+          paths: [frontend/node_modules,frontend/package-lock.json]
+          key: 'frontend-build-{{arch}}-{{ checksum "frontend/package.json" }}'
 
   build-backend:
     docker:
@@ -82,7 +86,7 @@ jobs:
             sudo apt-get -y install awscli
             sudo apt-get -y install curl
       - restore_cache:
-          keys: [backend-build]
+          key: 'backend-build--2-{{arch}}-{{ checksum "backend/package.json" }}'
       - run:
           name: Back-end build
           command: |
@@ -91,8 +95,8 @@ jobs:
              npm install --package-lock
              npm run build
       - save_cache:
-          paths: [backend/node_modules]
-          key: backend-build
+          paths: [backend/node_modules,backend/package-lock.json]
+          key: 'backend-build-2-{{arch}}-{{ checksum "backend/package.json" }}'
       - persist_to_workspace:
           root: ~/
           paths:
@@ -115,7 +119,7 @@ jobs:
             sudo apt-get -y install curl
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build]
+          key: 'frontend-build-{{arch}}-{{ checksum "frontend/package.json" }}'
       # Your job code here
       - run:
           name: Front-End test
@@ -141,7 +145,7 @@ jobs:
             sudo apt-get -y install curl
       # Restore from cache
       - restore_cache:
-          keys: [backend-build]
+          key: 'backend-build-2-{{arch}}-{{ checksum "backend/package.json" }}'
       # Your job code here
       - run:
           name: Back End test
@@ -166,7 +170,7 @@ jobs:
             sudo apt-get -y install curl
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build]
+          key: 'frontend-build-{{arch}}-{{ checksum "frontend/package.json" }}'
       # Your job code here
       - run:
           name: Front-End Analyze
@@ -191,7 +195,7 @@ jobs:
             sudo apt-get -y install curl
       # Restore from cache
       - restore_cache:
-          keys: [backend-build]
+          key: 'backend-build-2-{{arch}}-{{ checksum "backend/package.json" }}'
       # Your job code here
       - run:
           name: Back.End Analyze
@@ -298,7 +302,7 @@ jobs:
             sudo apt-get -y install awscli
             sudo apt-get -y install curl
       - restore_cache:
-          keys: [backend-build]
+          key: 'backend-build-2-{{arch}}-{{ checksum "backend/package.json" }}'
       - run:
           name: Run migrations
           command: |
@@ -337,7 +341,7 @@ jobs:
             yum install -y curl
             yum install -y gzip
       - restore_cache:
-          key: frontend-build
+          key: 'frontend-build-{{arch}}-{{ checksum "frontend/package.json" }}'
       - run:
           name: Moves cache to current working directory
           command: |
@@ -381,7 +385,7 @@ jobs:
           fingerprints: ["bc:78:08:9c:b1:50:d0:77:b4:39:87:76:88:4e:13:8c"]
 
       - restore_cache:
-          key: backend-build
+          key: 'backend-build-2-{{arch}}-{{ checksum "backend/package.json" }}'
       #cache is left in /home/circleci/ this step copies folders to home directory
       - run:
           name: Moves cache to current working directory
