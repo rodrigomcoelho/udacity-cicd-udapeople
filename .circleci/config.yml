@@ -72,7 +72,9 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
-      - slack-fail-notify
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
 
   build-backend:
     docker:
@@ -101,7 +103,9 @@ jobs:
       - save_cache:
           paths: [backend/dist]
           key: backend-dist
-      - slack-fail-notify
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
 
   test-frontend:
     docker:
@@ -538,8 +542,12 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
+      - build-frontend:
+          context:
+            - SlackNotiContext
+      - build-backend:
+          context:
+            - SlackNotiContext
       - test-frontend:
           requires: [build-frontend]
       - test-backend:
