@@ -391,11 +391,11 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            # Your code here
-            apk add --no-cache tar gzip
-            apk add --update ansible
-            apk add --update curl
-            apk add --update jq
+          # Your code here
+          apk add --no-cache tar gzip
+          apk add --update ansible
+          apk add --update curl
+          apk add --update jq
       # attach workspace
       - attach_workspace:
           at: ~/
@@ -524,26 +524,6 @@ jobs:
 
       - revert-migrations:
           workflow-id: $CIRCLE_WORKFLOW_ID
-
-cleanup:
-    docker:
-      # Docker image here
-    steps:
-      # Checkout code from git
-      - run:
-          name: Get old stack workflow id
-          command: |
-            # your code here
-            export OldWorkflowID="the id here"
-            export STACKS=[] #put the list of stacks here
-      - run:
-          name: Remove old stacks and files
-          command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-            then
-              # your code here
-            fi
-
 
 workflows:
   default:
