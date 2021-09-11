@@ -195,8 +195,9 @@ jobs:
           at: .
       - run:
           name: Install dependencies
+          working_directory: ./.circleci/ansible
           command: |
-            apk add --update ansible
+            apk add --update tar gzip ansible curl
             pip install awscli
       - run:
           name: Create dotenv file
