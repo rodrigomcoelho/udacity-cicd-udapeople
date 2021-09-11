@@ -4,26 +4,30 @@ orbs:
 commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      workflow-id:
+        type: string
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            aws cloudformation describe-stack-events --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID}
-            aws cloudformation describe-stack-events --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID}
-            aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID}/" --recursive
-            aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID}
-            aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID}
+            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow-id>>
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow-id>>
+            aws s3 rm "s3://udapeople-<<parameters.workflow-id>>/" --recursive
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
+    parameters:
+      workflow-id:
+        type: string
     steps:
       - run:
           name: Rollback Migration Result In Memstash.io
           when: on_fail
           command: |
             FAILRESULT=0
-            curl -H "Content-Type: text/plain" -H "token: migration-${CIRCLE_WORKFLOW_ID}" --request PUT --data ${FAILRESULT} https://api.memstash.io/values/migration_result
+            curl -H "Content-Type: text/plain" -H "token: migration-<<parameters.workflow-id>>" --request PUT --data ${FAILRESULT} https://api.memstash.io/values/migration_result
 
 jobs:
   build-frontend:
@@ -177,7 +181,8 @@ jobs:
           root: .
           paths:
             - .circleci/ansible
-      - destroy-environment
+      - destroy-environment:
+          workflow-id: $CIRCLE_WORKFLOW_ID
 
   configure-infrastructure:
     docker:
@@ -197,8 +202,7 @@ jobs:
           name: Create dotenv file
           command: |
             cd backend/
-            echo > ".env"
-            echo ENVIRONMENT="production" >> ".env"
+            echo ENVIRONMENT="production" > ".env"
             echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
             echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
             echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ".env"
@@ -213,7 +217,8 @@ jobs:
           command: |
             cat ".circleci/ansible/inventory.txt"
             ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
-      - destroy-environment
+      - destroy-environment:
+          workflow-id: $CIRCLE_WORKFLOW_ID
 
   run-migrations:
     docker:
@@ -249,8 +254,10 @@ jobs:
             cat result.txt
             RESULT=$(grep -Fc "has been executed successfully" result.txt)
             curl -H "Content-Type: text/plain" -H "token: migration-${CIRCLE_WORKFLOW_ID}" --request PUT --data ${RESULT} https://api.memstash.io/values/migration_result
-      - revert-migrations
-      - destroy-environment
+      - revert-migrations:
+          workflow-id: $CIRCLE_WORKFLOW_ID
+      - destroy-environment:
+          workflow-id: $CIRCLE_WORKFLOW_ID
 
   deploy-frontend:
     docker:
@@ -284,8 +291,10 @@ jobs:
             npm run build
             aws s3 sync ./dist s3://"udapeople-${CIRCLE_WORKFLOW_ID}"
       # Here's where you will add some code to rollback on failure
-      - revert-migrations
-      - destroy-environment
+      - revert-migrations:
+          workflow-id: $CIRCLE_WORKFLOW_ID
+      - destroy-environment:
+          workflow-id: $CIRCLE_WORKFLOW_ID
 
 
   deploy-backend:
@@ -319,8 +328,10 @@ jobs:
           name: Deploy backend
           command: |
             ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-      - revert-migrations
-      - destroy-environment
+      - revert-migrations:
+          workflow-id: $CIRCLE_WORKFLOW_ID
+      - destroy-environment:
+          workflow-id: $CIRCLE_WORKFLOW_ID
   smoke-test:
     docker:
       - image: python:3.7-alpine3.11
@@ -357,8 +368,10 @@ jobs:
             else
               return 1
             fi
-      - destroy-environment
-      - revert-migrations
+      - destroy-environment:
+          workflow-id: $CIRCLE_WORKFLOW_ID
+      - revert-migrations:
+          workflow-id: $CIRCLE_WORKFLOW_ID
 
   cloudfront-update:
     docker:
@@ -396,8 +409,10 @@ jobs:
           root: .
           paths:
             - ./lastFlow.txt
-      - destroy-environment
-      - revert-migrations
+      - destroy-environment:
+          workflow-id: $CIRCLE_WORKFLOW_ID
+      - revert-migrations:
+          workflow-id: $CIRCLE_WORKFLOW_ID
 
   cleanup:
       docker:
