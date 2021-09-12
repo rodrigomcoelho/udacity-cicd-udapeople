@@ -223,7 +223,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:latest
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
@@ -247,7 +247,6 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
             npm install
-            npm audit fix
             touch result.txt
             npm run migrations >> result.txt
       - run:
